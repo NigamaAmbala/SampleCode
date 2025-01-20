@@ -1,0 +1,91 @@
+<mvc:View
+    controllerName="com.sap.testing.controller.Home"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+>
+    <Page
+        id="page"
+        title="{i18n>title}"
+    >
+        <Table
+            id="idEmpTable"
+            items="{/Employees}"
+            alternateRowColors="true"
+            noDataText="No Data"
+            mode="MultiSelect"
+        >
+            <headerToolbar>
+                <OverflowToolbar id="idover">
+                    <ToolbarSpacer id="idtool" />
+                    <Button
+                        id="_IDGenButton1"
+                        type="Emphasized"
+                        text="create"
+                    />
+                    <Button
+                        id="_IDGenButton2"
+                        text="Edit"
+                        type="Success"
+                    />
+                    <Button
+                        id="_IDGenButton3"
+                        text="Delete"
+                        type="Negative"
+                        press="onDelete"
+                    />
+                </OverflowToolbar>
+            </headerToolbar>
+
+            <columns>
+                <Column id="idcol1">
+                    <Title
+                        id="_IDGenTitle1"
+                        text="ID"
+                    />
+                </Column>
+                <Column id="idcol2">
+                    <Title
+                        id="_IDGenTitle2"
+                        text="Name"
+                    />
+                </Column>
+                <Column id="idcol3">
+                    <Title
+                        id="_IDGenTitle3"
+                        text="Depatrtment"
+                    />
+                </Column>
+                <Column id="idcol4">
+                    <Title
+                        id="_IDGenTitle4"
+                        text="age"
+                    />
+                </Column>
+            </columns>
+
+            <items>
+                <ColumnListItem id="idcolllistitemn">
+                    <cells>
+                        <Text
+                            id="_IDGenText1"
+                            text="{id}"
+                        />
+                        <Text
+                            id="_IDGenText2"
+                            text="{name}"
+                        />
+
+                        <Text
+                            id="_IDGenText3"
+                            text="{department}"
+                        />
+                        <Text
+                            id="_IDGenText4"
+                            text="{age}"
+                        />
+                    </cells>
+                </ColumnListItem>
+            </items>
+        </Table>
+    </Page>
+</mvc:View>

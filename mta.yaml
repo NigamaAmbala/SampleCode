@@ -1,0 +1,138 @@
+_schema-version: 3.3.0
+ID: SampleCode
+description: A simple CAP project.
+version: 1.0.0
+modules:
+  - name: SampleCode-srv
+    type: nodejs
+    path: gen/srv
+    requires:
+      - name: SampleCode-db
+      - name: uaa_SampleCode
+    provides:
+      - name: srv-api
+        properties:
+          srv-url: ${default-url}
+    parameters:
+      buildpack: nodejs_buildpack
+      readiness-health-check-http-endpoint: /health
+      readiness-health-check-type: http
+    build-parameters:
+      builder: npm
+  - name: SampleCode-db-deployer
+    type: hdb
+    path: gen/db
+    requires:
+      - name: SampleCode-db
+    parameters:
+      buildpack: nodejs_buildpack
+  - name: SampleCode-destination-content
+    type: com.sap.application.content
+    requires:
+      - name: SampleCode-destination-service
+        parameters:
+          content-target: true
+      - name: SampleCode_html_repo_host
+        parameters:
+          service-key:
+            name: SampleCode_html_repo_host-key
+      - name: uaa_SampleCode
+        parameters:
+          service-key:
+            name: uaa_SampleCode-key
+    parameters:
+      content:
+        instance:
+          destinations:
+            - Name: SampleApplication_SampleCode_html_repo_host
+              ServiceInstanceName: SampleCode-html5-app-host-service
+              ServiceKeyName: SampleCode_html_repo_host-key
+              sap.cloud.service: SampleApplication
+            - Authentication: OAuth2UserTokenExchange
+              Name: SampleApplication_uaa_SampleCode
+              ServiceInstanceName: SampleCode-xsuaa-service
+              ServiceKeyName: uaa_SampleCode-key
+              sap.cloud.service: SampleApplication
+          existing_destinations_policy: ignore
+    build-parameters:
+      no-source: true
+  - name: SampleCode-app-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: SampleCode_html_repo_host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - comsaptesting.zip
+          name: comsaptesting
+          target-path: resources/
+  - name: comsaptesting
+    type: html5
+    path: app/testing
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms:
+        []
+resources:
+  - name: SampleCode-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
+  - name: SampleCode-destination-service
+    type: org.cloudfoundry.managed-service
+    parameters:
+      config:
+        HTML5Runtime_enabled: true
+        init_data:
+          instance:
+            destinations:
+              - Authentication: NoAuthentication
+                Name: ui5
+                ProxyType: Internet
+                Type: HTTP
+                URL: https://ui5.sap.com
+              - Authentication: NoAuthentication
+                HTML5.DynamicDestination: true
+                HTML5.ForwardAuthToken: true
+                Name: SampleCode-srv-api
+                ProxyType: Internet
+                Type: HTTP
+                URL: ~{srv-api/srv-url}
+            existing_destinations_policy: update
+        version: 1.0.0
+      service: destination
+      service-name: SampleCode-destination-service
+      service-plan: lite
+    requires:
+      - name: srv-api
+  - name: SampleCode_html_repo_host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-name: SampleCode-html5-app-host-service
+      service-plan: app-host
+  - name: uaa_SampleCode
+    type: org.cloudfoundry.managed-service
+    parameters:
+      path: ./xs-security.json
+      service: xsuaa
+      service-name: SampleCode-xsuaa-service
+      service-plan: application
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm ci
+        - npx cds build --production
